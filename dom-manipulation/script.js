@@ -157,32 +157,36 @@ function notifyUpdate(message) {
   setTimeout(() => note.remove(), 5000);
 }
 
-// ✅ Required function: Simulate server fetch + conflict resolution
-function fetchQuotesFromServer() {
-  fetch("https://jsonplaceholder.typicode.com/posts?_limit=5")
-    .then(res => res.json())
-    .then(data => {
-      let updatesMade = false;
-      data.forEach(item => {
-        const newQuote = {
-          text: item.title,
-          category: "Server"
-        };
+// ✅ Required: Use async/await to fetch from mock API
+async function fetchQuotesFromServer() {
+  try {
+    const response = await fetch("https://jsonplaceholder.typicode.com/posts?_limit=5");
+    const data = await response.json();
 
-        const exists = quotes.some(q => q.text === newQuote.text);
-        if (!exists) {
-          quotes.push(newQuote);
-          updatesMade = true;
-        }
-      });
+    let updatesMade = false;
 
-      if (updatesMade) {
-        saveQuotes();
-        populateCategories();
-        notifyUpdate("Quotes synced from server. Conflicts resolved using server data.");
+    data.forEach(item => {
+      const newQuote = {
+        text: item.title,
+        category: "Server"
+      };
+
+      const exists = quotes.some(q => q.text === newQuote.text);
+      if (!exists) {
+        quotes.push(newQuote);
+        updatesMade = true;
       }
-    })
-    .catch(() => notifyUpdate("⚠ Failed to sync with server."));
+    });
+
+    if (updatesMade) {
+      saveQuotes();
+      populateCategories();
+      notifyUpdate("Quotes synced from server. Conflicts resolved using server data.");
+    }
+  } catch (error) {
+    notifyUpdate("⚠ Failed to sync with server.");
+    console.error("Sync error:", error);
+  }
 }
 
 // ✅ On page load
