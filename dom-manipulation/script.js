@@ -35,7 +35,7 @@ function showRandomQuote() {
   sessionStorage.setItem("lastQuote", JSON.stringify(randomQuote));
 }
 
-// ✅ Add new quote
+// ✅ Add new quote (and POST to mock server)
 function addQuote() {
   const text = document.getElementById("newQuoteText").value.trim();
   const category = document.getElementById("newQuoteCategory").value.trim();
@@ -45,7 +45,8 @@ function addQuote() {
     return;
   }
 
-  quotes.push({ text, category });
+  const newQuote = { text, category };
+  quotes.push(newQuote);
   saveQuotes();
   populateCategories();
 
@@ -53,6 +54,9 @@ function addQuote() {
   document.getElementById("newQuoteCategory").value = "";
 
   alert("Quote added!");
+
+  // ✅ Post to mock API
+  postQuoteToServer(newQuote);
 }
 
 // ✅ Create form for adding new quotes
@@ -157,7 +161,7 @@ function notifyUpdate(message) {
   setTimeout(() => note.remove(), 5000);
 }
 
-// ✅ Required: Use async/await to fetch from mock API
+// ✅ Fetch quotes from mock API (GET with async/await)
 async function fetchQuotesFromServer() {
   try {
     const response = await fetch("https://jsonplaceholder.typicode.com/posts?_limit=5");
@@ -189,6 +193,28 @@ async function fetchQuotesFromServer() {
   }
 }
 
+// ✅ POST quote to mock API (with required headers)
+async function postQuoteToServer(quote) {
+  try {
+    const response = await fetch("https://jsonplaceholder.typicode.com/posts", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        title: quote.text,
+        body: quote.category,
+        userId: 1
+      })
+    });
+
+    const result = await response.json();
+    console.log("Posted to server:", result);
+  } catch (error) {
+    console.error("Failed to post to server:", error);
+  }
+}
+
 // ✅ On page load
 document.addEventListener("DOMContentLoaded", () => {
   loadQuotes();
@@ -199,14 +225,12 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("exportBtn").addEventListener("click", exportQuotesToJson);
   document.getElementById("importFile").addEventListener("change", importFromJsonFile);
 
-  // Show last session quote
   const lastQuote = sessionStorage.getItem("lastQuote");
   if (lastQuote) {
     const { text, category } = JSON.parse(lastQuote);
     document.getElementById("quoteDisplay").innerHTML = `<p>"${text}"</p><em>- ${category}</em>`;
   }
 
-  // ✅ Initial and periodic server sync
   fetchQuotesFromServer();
-  setInterval(fetchQuotesFromServer, 30000); // every 30 seconds
+  setInterval(fetchQuotesFromServer, 30000);
 });
